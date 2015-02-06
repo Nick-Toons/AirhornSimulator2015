@@ -1,0 +1,7 @@
+Nick's Dev Journal - 
+	PULL REQUEST:
+		- Added Nick's Dev Journal which will allow Nick to add things onto the list that he did.
+He works on things, and will put three sections into his DevJournal: MERGED, PULL REQUEST, and IN PROGRESS.
+	IN PROGRESS:
+		- Updated logo for the app.
+	
