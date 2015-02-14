@@ -1,19 +1,40 @@
 package com.herrschreiber.airhornsimulator2015;
 
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageButton;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.util.List;
+
+import butterknife.ButterKnife;
+import butterknife.InjectView;
+import butterknife.OnClick;
 
 
 public class MainActivity extends ActionBarActivity {
+    SoundPlayer player;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        ButterKnife.inject(this);
+        player = new SoundPlayer();
+        try {
+            player.loadSounds(getApplicationContext());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        List<SoundPlayer.Sound> sounds = player.getSounds();
+        Log.e("MainActivity", sounds.toString());
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
