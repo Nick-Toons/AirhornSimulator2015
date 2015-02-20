@@ -1,21 +1,15 @@
 package com.herrschreiber.airhornsimulator2015;
 
-import android.media.AudioManager;
-import android.media.SoundPool;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ImageButton;
-import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.List;
 
 import butterknife.ButterKnife;
-import butterknife.InjectView;
-import butterknife.OnClick;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -28,7 +22,7 @@ public class MainActivity extends ActionBarActivity {
         ButterKnife.inject(this);
         player = new SoundPlayer();
         try {
-            player.loadSounds(getApplicationContext());
+            player.loadSounds(this);
         } catch (IOException e) {
             e.printStackTrace();
         }

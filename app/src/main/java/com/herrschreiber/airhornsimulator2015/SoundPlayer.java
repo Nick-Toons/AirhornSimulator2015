@@ -3,11 +3,10 @@ package com.herrschreiber.airhornsimulator2015;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
-import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
 
-import java.io.FileDescriptor;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.List;
  * Created by alex on 2/13/15.
  */
 public class SoundPlayer {
-    public static final String SOUNDS_PATH = "./";
+    public static final String SOUNDS_PATH = "sounds";
     public static final int DEFAULT_PRIORITY = 1;
     public static final int DEFAULT_RATE = 1;
     public static final int DEFAULT_VOLUME = 1;
@@ -38,7 +37,7 @@ public class SoundPlayer {
             throw new IOException("Failed to list sounds while loading sounds", e);
         }
         for (String soundName : soundNames) {
-            AssetFileDescriptor fd = am.openFd(SOUNDS_PATH + soundName);
+            AssetFileDescriptor fd = am.openFd(new File(SOUNDS_PATH, soundName).getPath());
             int id = soundPool.load(fd, DEFAULT_PRIORITY);
             Sound sound = new Sound(soundName, id);
             sounds.add(sound);
@@ -76,6 +75,15 @@ public class SoundPlayer {
 
         public void setId(int id) {
             this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("Sound{");
+            sb.append("name='").append(name).append('\'');
+            sb.append(", id=").append(id);
+            sb.append('}');
+            return sb.toString();
         }
     }
 }
