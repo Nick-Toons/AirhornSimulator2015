@@ -11,3 +11,12 @@ to begin writing code for mine and Mikhalev's 20% project. I, for the entirity o
 version of Android Studio onto my flash drive, it continued to install throughout 7th period, and... didn't finish. Once I do
 finish installing my environment, I will be working on some implementation of sound effects as well as the button layout for
 the app. But for now, I will work on the logo and perfect that more, while slow computers install slow things.
+
+2-20-15
+	In the past week, I was able to get my environment properly set up for a mobile version, I was also able to add a few
+more sounds to our sound files. Besides installs on my computer at home taking a mystiriously long time, everything set up pretty
+fast. I will be taking this weekend now to look over the progress already made and see what I can do from there. I will also be
+browsing the internet for more sound effects that are not copyrighted to anyone to drop. I will probably be staying up until
+Android Studio decides to stop being stupid and install faster than 1MB/minute... Great work AS. For now, since I can't open up
+my local version of AS until it finishes installing on my flashdrive, I am left only able to add sound effects, and work on
+logos and such.
