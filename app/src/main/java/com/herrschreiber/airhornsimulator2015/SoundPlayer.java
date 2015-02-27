@@ -5,6 +5,7 @@ import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +20,7 @@ public class SoundPlayer {
     public static final int DEFAULT_PRIORITY = 1;
     public static final int DEFAULT_RATE = 1;
     public static final int DEFAULT_VOLUME = 1;
-    public static final int MAX_STREAMS = 1;
+    public static final int MAX_STREAMS = 2;
     private SoundPool soundPool;
     private List<Sound> sounds;
 
@@ -37,6 +38,9 @@ public class SoundPlayer {
             throw new IOException("Failed to list sounds while loading sounds", e);
         }
         for (String soundName : soundNames) {
+            if (soundName.contains("raw")) // i dont even know
+                continue;
+            Log.d("SoundPlayer", "Adding sound " + soundName);
             AssetFileDescriptor fd = am.openFd(new File(SOUNDS_PATH, soundName).getPath());
             int id = soundPool.load(fd, DEFAULT_PRIORITY);
             Sound sound = new Sound(soundName, id);

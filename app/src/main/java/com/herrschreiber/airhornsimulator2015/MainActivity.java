@@ -2,18 +2,24 @@ package com.herrschreiber.airhornsimulator2015;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.GridView;
 
 import java.io.IOException;
 import java.util.List;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 
 
 public class MainActivity extends ActionBarActivity {
     SoundPlayer player;
+    @InjectView(R.id.sounds)
+    GridView soundsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,7 +33,13 @@ public class MainActivity extends ActionBarActivity {
             e.printStackTrace();
         }
         List<SoundPlayer.Sound> sounds = player.getSounds();
-        Log.e("MainActivity", sounds.toString());
+        soundsList.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, sounds));
+        soundsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                player.playSound((SoundPlayer.Sound) parent.getItemAtPosition(position));
+            }
+        });
     }
 
     @Override
