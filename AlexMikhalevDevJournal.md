@@ -28,3 +28,20 @@ that assets can not be dynamically added at runtime because they are not
 actually stored on the filesystem. They are compressed as part of the .apk 
 file. So if we want to be able to implement the store functionality we will 
 have to change the implementation of sound storage.
+
+## 2/27/2015
+I have spent some more time on the app. The wow sound effect that nick added didn't work with the
+SoundPool for some reason. It would give an error like "could not load file (null)" and not play.
+To fix this I converted the sound to a mp3 file using the following ffmpeg command
+
+```sh
+ffmpeg -i wow.wav -coded:a libmp3flac wow.mp3
+```
+
+I also fixed a bug where it would try to load some `bootanim.raw` file. I have no idea what this
+file is and why it would try to load it, but it is fixed now. There is now a basic ui for playing
+sounds. There is a single GridView in the main activity that has a list of all the sounds in the
+assets/sounds folder. It isn't very polished yet because it just shows the result of toString() on
+the Sound class. In the future this should be changed to use a custom ListAdapter, which can show
+more things like an icon. But for now this works. You can successfully annoy schreiber with two
+whole sounds.
