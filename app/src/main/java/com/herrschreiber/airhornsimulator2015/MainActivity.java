@@ -5,6 +5,7 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Adapter;
 
 import java.io.IOException;
 import java.util.List;
@@ -50,5 +51,17 @@ public class MainActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    public boolean areAllItemsEnabled(){
+        return true;
+    }
+
+    public boolean isEnabled(int position){
+        if(position > player.getSounds().size() || position < 0) {
+            throw new ArrayIndexOutOfBoundsException();
+        } else {
+            return true;
+        }
     }
 }

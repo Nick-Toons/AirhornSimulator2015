@@ -20,3 +20,14 @@ browsing the internet for more sound effects that are not copyrighted to anyone 
 Android Studio decides to stop being stupid and install faster than 1MB/minute... Great work AS. For now, since I can't open up
 my local version of AS until it finishes installing on my flashdrive, I am left only able to add sound effects, and work on
 logos and such.
+
+2-27-15
+	In the past week, I have been doing some research on what I can do to help out in this project, Mikhalev and I have come 
+to a conclusion that I will be helping out with the code, like I should. Therefore, once I got done with installing Android
+Studio onto my flash drive to create a portable Android Studio, I began to work in the depths of the code. By that I mean I have
+added a few "in progress" methods. And by "in progress", I mean, the basic implementation is there, just the lovely jubbly stuff
+in there is not. My current research involves creating a ListAdapter for our ListView of sounds, quite the challenge, but I can
+overcome it if I take the time to learn.
+
+NOTE TO SCHREIBER WHO WILL BE READING THIS: I left my Crystal 2DS and charger in the small gym accidentally after the TVMSC Dance/Game Night, 
+if you or any other teacher picked it up please email me at idabsufan@cableone.net, jenupho@gmail.com, or text/call me at(208) 891-3538.
