@@ -29,5 +29,8 @@ added a few "in progress" methods. And by "in progress", I mean, the basic imple
 in there is not. My current research involves creating a ListAdapter for our ListView of sounds, quite the challenge, but I can
 overcome it if I take the time to learn.
 
-NOTE TO SCHREIBER WHO WILL BE READING THIS: I left my Crystal 2DS and charger in the small gym accidentally after the TVMSC Dance/Game Night, 
-if you or any other teacher picked it up please email me at idabsufan@cableone.net, jenupho@gmail.com, or text/call me at(208) 891-3538.
+3-6-15
+	Due to recent illnesses, I was unable to properly work on anything regarding this, or any assignment much. I apologize to
+Mikhalev as well as Mr. Schreiber, but my immune system failed me on a fairly important day, I will make every attempt to work
+on this project over at our Utah Regional for Robotics for this next week, but much might not come out. I still need to catch up on
+recent changes that were probably made.
