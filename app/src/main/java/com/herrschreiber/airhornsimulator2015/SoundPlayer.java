@@ -12,6 +12,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.GainProcessor;
+import be.tarsos.dsp.MultichannelToMono;
+import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd;
+import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd.Parameters;
+import be.tarsos.dsp.io.android.AudioDispatcherFactory;
+import be.tarsos.dsp.io.android.AndroidAudioInputStream;
+import be.tarsos.dsp.resample.RateTransposer;
+
 /**
  * Created by alex on 2/13/15.
  */

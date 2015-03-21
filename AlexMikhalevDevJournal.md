@@ -45,3 +45,15 @@ assets/sounds folder. It isn't very polished yet because it just shows the resul
 the Sound class. In the future this should be changed to use a custom ListAdapter, which can show
 more things like an icon. But for now this works. You can successfully annoy schreiber with two
 whole sounds.
+
+## 3/20/2015
+I have added the sound processing library necessary for the pitch shifting audio playing to the
+project. It is called TarsosDSP and it is open source and free. It has an example called Catify
+which does something similar to what we need in that it takes a series of notes and an audio
+sample and makes a song using those. All I need to do is adapt that code for android, which may be
+difficult to do because the audio stack is completely different. They do provide some classes for
+interfacing with android audio but I am not yet sure if they are sufficient. So far, this is the
+only FOSS and pure java audio processing library that I could find. Any others either have native
+components or are not free, which makes them more difficult to use. I am hoping to get a working
+example by next week, but it did take a bit of work to get this library to be recognized by android
+studio and gradle.
