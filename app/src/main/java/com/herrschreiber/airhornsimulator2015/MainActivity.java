@@ -66,7 +66,12 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public boolean areAllItemsEnabled(){
-        return true;
+        boolean x = true;
+        for(int i = 0; i < player.getSounds().size() && x; i++){
+            if(isEnabled(i)) x = true;
+            else x = false;
+        }
+        return x;
     }
 
     public boolean isEnabled(int position){

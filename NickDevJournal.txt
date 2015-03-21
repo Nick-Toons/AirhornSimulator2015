@@ -34,3 +34,10 @@ overcome it if I take the time to learn.
 Mikhalev as well as Mr. Schreiber, but my immune system failed me on a fairly important day, I will make every attempt to work
 on this project over at our Utah Regional for Robotics for this next week, but much might not come out. I still need to catch up on
 recent changes that were probably made.
+
+3-20-15
+	To get back into the groove of things, I have been looking over Alex Mikhalev's code and, not only trying to figure out how
+it would work, but also trying to figure out what I can do to help. The changes I have made this week, since I haven't seen a push
+from him on GitHub for a while, shouldn't affect how the code works. I was basically only able to fill in a method and figure out
+how the rest worked. Now since Mikhalev and I will be gone when our deliverable is due the week after spring break, I will try to
+work more on this project over spring break, in hopes to contribute more.
