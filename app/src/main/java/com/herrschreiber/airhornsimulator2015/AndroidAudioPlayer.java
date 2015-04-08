@@ -16,9 +16,9 @@ import be.tarsos.dsp.io.TarsosDSPAudioFormat;
  * Created by alex on 4/6/15.
  */
 public class AndroidAudioPlayer implements AudioProcessor {
-    public static final String TAG = "AndroidAudioPlayer";
+    private static final String TAG = "AndroidAudioPlayer";
     private AudioTrack audioTrack;
-    private TarsosDSPAudioFormat format;
+    private final TarsosDSPAudioFormat format;
 
     public AndroidAudioPlayer(TarsosDSPAudioFormat audioFormat, int bufferSize) {
         format = audioFormat;

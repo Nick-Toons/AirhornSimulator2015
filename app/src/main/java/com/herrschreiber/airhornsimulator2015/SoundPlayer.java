@@ -18,15 +18,13 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import be.tarsos.dsp.AudioDispatcher;
-
 /**
  * Created by alex on 2/13/15.
  */
 public class SoundPlayer {
-    public static final String SOUNDS_PATH = "Sounds";
+    private static final String SOUNDS_PATH = "Sounds";
     private static final String TAG = "SoundPlayer";
-    private List<Sound> sounds;
+    private final List<Sound> sounds;
 
     public SoundPlayer() {
         sounds = new ArrayList<>();
@@ -65,15 +63,15 @@ public class SoundPlayer {
     public static class Sound {
         public static final String TAG = "Sound";
         public static final long TIMEOUT_US = 1000;
-        private String name;
-        private MediaExtractor extractor;
+        public static final int NO_OUTPUT_COUNTER_LIMIT = 50;
+        private final String name;
+        private final MediaExtractor extractor;
         private MediaFormat mediaFormat;
         private String mime;
         private MediaCodec decoder;
         private AudioTrack audioTrack;
         private AsyncTask<Void, Void, Void> playTask;
         private boolean stop;
-        public static final int NO_OUTPUT_COUNTER_LIMIT = 50;
 
         public Sound(String name, AssetFileDescriptor fd) throws IOException {
             this.name = name;
@@ -234,13 +232,11 @@ public class SoundPlayer {
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("SoundPlayer.Sound[");
-            sb.append("name='").append(name).append('\'');
-            sb.append(", extractor=").append(extractor);
-            sb.append(", decoder=").append(decoder);
-            sb.append(", mediaFormat=").append(mediaFormat);
-            sb.append(']');
-            return sb.toString();
+            return "SoundPlayer.Sound[" +
+                    "name='" + name + '\'' +
+                    ", extractor=" + extractor +
+                    ", decoder=" + decoder +
+                    ", mediaFormat=" + mediaFormat + ']';
         }
     }
 }

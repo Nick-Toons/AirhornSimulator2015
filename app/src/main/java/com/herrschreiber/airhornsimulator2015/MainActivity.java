@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Adapter;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,9 +17,9 @@ import butterknife.InjectView;
 
 
 public class MainActivity extends ActionBarActivity {
-    SoundPlayer player;
+    private SoundPlayer player;
     @InjectView(R.id.sounds)
-    GridView soundsList;
+    protected GridView soundsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,17 +64,16 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public boolean areAllItemsEnabled(){
+    public boolean areAllItemsEnabled() {
         boolean x = true;
-        for(int i = 0; i < player.getSounds().size() && x; i++){
-            if(isEnabled(i)) x = true;
-            else x = false;
+        for (int i = 0; i < player.getSounds().size() && x; i++) {
+            x = isEnabled(i);
         }
         return x;
     }
 
-    public boolean isEnabled(int position){
-        if(position > player.getSounds().size() || position < 0) {
+    public boolean isEnabled(int position) {
+        if (position > player.getSounds().size() || position < 0) {
             throw new ArrayIndexOutOfBoundsException();
         } else {
             return true;
