@@ -3,10 +3,9 @@ apply plugin: 'com.android.application'
 android {
     compileSdkVersion 21
     buildToolsVersion "21.1.2"
-
     defaultConfig {
         applicationId "com.herrschreiber.airhornsimulator2015"
-        minSdkVersion 15
+        minSdkVersion 19
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
@@ -17,11 +16,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    productFlavors {
+    }
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:21.0.3'
     compile 'com.android.support:support-v13:21.0.3'
-    compile 'com.jakewharton:butterknife:5.1.1'
+    compile 'com.jakewharton:butterknife:6.1.0'
 }

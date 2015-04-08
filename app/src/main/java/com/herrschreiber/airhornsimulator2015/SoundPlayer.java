@@ -3,38 +3,32 @@ package com.herrschreiber.airhornsimulator2015;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
+import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.SoundPool;
+import android.media.AudioTrack;
+import android.media.MediaCodec;
+import android.media.MediaExtractor;
+import android.media.MediaFormat;
+import android.os.AsyncTask;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 import be.tarsos.dsp.AudioDispatcher;
-import be.tarsos.dsp.GainProcessor;
-import be.tarsos.dsp.MultichannelToMono;
-import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd;
-import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd.Parameters;
-import be.tarsos.dsp.io.android.AudioDispatcherFactory;
-import be.tarsos.dsp.io.android.AndroidAudioInputStream;
-import be.tarsos.dsp.resample.RateTransposer;
 
 /**
  * Created by alex on 2/13/15.
  */
 public class SoundPlayer {
-    public static final String SOUNDS_PATH = "sounds";
-    public static final int DEFAULT_PRIORITY = 1;
-    public static final int DEFAULT_RATE = 1;
-    public static final int DEFAULT_VOLUME = 1;
-    public static final int MAX_STREAMS = 2;
-    private SoundPool soundPool;
+    public static final String SOUNDS_PATH = "Sounds";
+    private static final String TAG = "SoundPlayer";
     private List<Sound> sounds;
 
     public SoundPlayer() {
-        soundPool = new SoundPool(MAX_STREAMS, AudioManager.STREAM_MUSIC, 0);
         sounds = new ArrayList<>();
     }
 
@@ -47,12 +41,15 @@ public class SoundPlayer {
             throw new IOException("Failed to list sounds while loading sounds", e);
         }
         for (String soundName : soundNames) {
-            if (soundName.contains("raw")) // i dont even know
-                continue;
             Log.d("SoundPlayer", "Adding sound " + soundName);
             AssetFileDescriptor fd = am.openFd(new File(SOUNDS_PATH, soundName).getPath());
-            int id = soundPool.load(fd, DEFAULT_PRIORITY);
-            Sound sound = new Sound(soundName, id);
+            Sound sound = null;
+            try {
+                sound = new Sound(soundName, fd);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e(TAG, "Error creating sound", e);
+            }
             sounds.add(sound);
         }
     }
@@ -62,40 +59,187 @@ public class SoundPlayer {
     }
 
     public void playSound(Sound sound) {
-        soundPool.play(sound.getId(), DEFAULT_VOLUME, DEFAULT_VOLUME, DEFAULT_PRIORITY, 0, DEFAULT_RATE);
+        sound.play();
     }
 
     public static class Sound {
+        public static final String TAG = "Sound";
+        public static final long TIMEOUT_US = 1000;
         private String name;
-        private int id;
+        private MediaExtractor extractor;
+        private MediaFormat mediaFormat;
+        private String mime;
+        private MediaCodec decoder;
+        private AudioTrack audioTrack;
+        private AsyncTask<Void, Void, Void> playTask;
+        private boolean stop;
+        public static final int NO_OUTPUT_COUNTER_LIMIT = 50;
 
-        public Sound(String name, int id) {
+        public Sound(String name, AssetFileDescriptor fd) throws IOException {
             this.name = name;
-            this.id = id;
+
+            extractor = new MediaExtractor();
+            extractor.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+            fd.close();
+
+            if (extractor.getTrackCount() != 1) {
+                throw new Error("File does not have one track: " + name);
+            }
+
+            mediaFormat = extractor.getTrackFormat(0);
+            mime = mediaFormat.getString(MediaFormat.KEY_MIME);
+            if (!mime.startsWith("audio/")) {
+                throw new Error("Not an audio file: " + name);
+            }
+
+            Log.i(TAG, "Created sound " + this.toString());
         }
 
         public String getName() {
             return name;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        public void play() {
+            if (playTask == null || playTask.getStatus() != AsyncTask.Status.RUNNING) {
+                playTask = new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... params) {
+                        Sound.this.decoderLoop();
+                        return null;
+                    }
+                };
+                playTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            } else {
+                extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            }
         }
 
-        public int getId() {
-            return id;
+        public void stop() {
+            stop = true;
         }
 
-        public void setId(int id) {
-            this.id = id;
+        protected void decoderLoop() {
+            extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            try {
+                decoder = MediaCodec.createDecoderByType(mime);
+            } catch (IOException e) {
+                Log.e(TAG, "Error creating decoder for Sound '" + name + "'", e);
+            }
+            decoder.configure(mediaFormat, null, null, 0);
+            decoder.start();
+
+            int sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            int channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+            int channelConfig;
+            if (channelCount == 1) {
+                channelConfig = AudioFormat.CHANNEL_OUT_MONO;
+            } else if (channelCount == 2) {
+                channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
+            } else {
+                throw new Error("Unsupported channel count: " + channelCount);
+            }
+
+            int minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT);
+            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfig,
+                    AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
+            Log.i(TAG, "Created AudioTrack " + audioTrack.toString());
+
+            audioTrack.play();
+            extractor.selectTrack(0);
+            MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+            ByteBuffer[] inputBuffers = decoder.getInputBuffers();
+            ByteBuffer[] outputBuffers = decoder.getOutputBuffers();
+            boolean sawInputEOS = false;
+            boolean sawOutputEOS = false;
+            int noOutputCounter = 0;
+            stop = false;
+            while (!sawOutputEOS && noOutputCounter < NO_OUTPUT_COUNTER_LIMIT && !stop) {
+                noOutputCounter++;
+                if (!sawInputEOS) {
+                    int inputBufIndex = decoder.dequeueInputBuffer(TIMEOUT_US);
+                    if (inputBufIndex >= 0) {
+                        ByteBuffer dstBuf = inputBuffers[inputBufIndex];
+
+                        int sampleSize = extractor.readSampleData(dstBuf, 0 /* offset */);
+
+                        long presentationTimeUs = 0;
+
+                        if (sampleSize < 0) {
+                            Log.d(TAG, "Input EOS");
+                            sawInputEOS = true;
+                            sampleSize = 0;
+                        } else {
+                            presentationTimeUs = extractor.getSampleTime();
+                        }
+                        // can throw illegal state exception (???)
+                        decoder.queueInputBuffer(inputBufIndex, 0 /* offset */, sampleSize,
+                                presentationTimeUs, sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM : 0);
+                        if (!sawInputEOS) {
+                            extractor.advance();
+                        }
+                    } else {
+                        Log.e(TAG, "inputBufIndex " + inputBufIndex);
+                    }
+                }
+                int res = decoder.dequeueOutputBuffer(info, TIMEOUT_US);
+                if (res >= 0) {
+                    if (info.size > 0) {
+                        noOutputCounter = 0;
+                    }
+
+                    ByteBuffer buf = outputBuffers[res];
+
+                    final byte[] chunk = new byte[info.size];
+                    buf.get(chunk);
+                    buf.clear();
+                    if (chunk.length > 0)
+                        audioTrack.write(chunk, 0, chunk.length);
+                    decoder.releaseOutputBuffer(res, false /* render */);
+                    if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                        Log.d(TAG, "Output EOS");
+                        sawOutputEOS = true;
+                    }
+                } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                    outputBuffers = decoder.getOutputBuffers();
+                    Log.d(TAG, "output buffers have changed.");
+                } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+                    MediaFormat oformat = decoder.getOutputFormat();
+                    Log.d(TAG, "output format has changed to " + oformat);
+                } else {
+                    Log.d(TAG, "dequeueOutputBuffer returned " + res);
+                }
+            }
+
+            Log.d(TAG, "Finished playing sound " + name);
+
+            relaxResources(true);
+
+            stop = true;
+        }
+
+        private void relaxResources(Boolean release) {
+            if (decoder != null) {
+                if (release) {
+                    decoder.stop();
+                    decoder.release();
+                    decoder = null;
+                }
+            }
+            if (audioTrack != null) {
+                audioTrack.flush();
+                audioTrack.release();
+                audioTrack = null;
+            }
         }
 
         @Override
         public String toString() {
-            final StringBuilder sb = new StringBuilder("Sound{");
+            final StringBuilder sb = new StringBuilder("SoundPlayer.Sound[");
             sb.append("name='").append(name).append('\'');
-            sb.append(", id=").append(id);
-            sb.append('}');
+            sb.append(", extractor=").append(extractor);
+            sb.append(", decoder=").append(decoder);
+            sb.append(", mediaFormat=").append(mediaFormat);
+            sb.append(']');
             return sb.toString();
         }
     }
