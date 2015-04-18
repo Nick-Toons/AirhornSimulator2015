@@ -48,3 +48,11 @@ only to find out that when the school computers are disconnected from the networ
 It has also been noted to be fairly difficult as well as new for me to have to build off of some one else's code, so each week I
 practically need to re-learn the code every week since Alex likes to constantly work on the project. However, I will soon be able
 to test out our project.
+
+4-17-15
+	Being able to work on my home computer, I was still unable to create an unsigned apk and install it onto my phone. 
+There are a few tweaks I need to make for my environment for me to be able to fully do the required things. The basic learning for
+me in this project is mostly setting up the environment. I wish I was able to contribute more to the code than I have. The learning 
+curve has been somewhat steep of a slope, but I am trying to learn and contribute, it is just difficult sometimes without proper
+tutorials/people to guide me. I've never had the best luck learning things on my own.
+a slope
