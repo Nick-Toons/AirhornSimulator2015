@@ -41,3 +41,10 @@ it would work, but also trying to figure out what I can do to help. The changes 
 from him on GitHub for a while, shouldn't affect how the code works. I was basically only able to fill in a method and figure out
 how the rest worked. Now since Mikhalev and I will be gone when our deliverable is due the week after spring break, I will try to
 work more on this project over spring break, in hopes to contribute more.
+
+4-10-15
+	With recent difficulties with my portable environment, I had tried to create an unsigned apk with the school computers,
+only to find out that when the school computers are disconnected from the network drives, it is for some reason unable to do so.
+It has also been noted to be fairly difficult as well as new for me to have to build off of some one else's code, so each week I
+practically need to re-learn the code every week since Alex likes to constantly work on the project. However, I will soon be able
+to test out our project.
