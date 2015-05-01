@@ -3,9 +3,6 @@ package com.herrschreiber.airhornsimulator2015;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -14,9 +11,18 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.AudioGenerator;
+import be.tarsos.dsp.io.TarsosDSPAudioFormat;
+import be.tarsos.dsp.io.TarsosDSPAudioInputStream;
 
 /**
  * Created by alex on 2/13/15.
@@ -25,6 +31,7 @@ public class SoundPlayer {
     private static final String SOUNDS_PATH = "Sounds";
     private static final String TAG = "SoundPlayer";
     private final List<Sound> sounds;
+    private AudioDispatcher audioDispatcher;
 
     public SoundPlayer() {
         sounds = new ArrayList<>();
@@ -57,10 +64,15 @@ public class SoundPlayer {
     }
 
     public void playSound(Sound sound) {
-        sound.play();
+        if (audioDispatcher != null)
+            audioDispatcher.stop();
+        sound.start();
+        audioDispatcher = new AudioDispatcher(sound, 1024, 512);
+        audioDispatcher.addAudioProcessor(new AndroidAudioPlayer(audioDispatcher.getFormat(), 1024));
+        new Thread(audioDispatcher).start();
     }
 
-    public static class Sound {
+    public static class Sound implements TarsosDSPAudioInputStream {
         public static final String TAG = "Sound";
         public static final long TIMEOUT_US = 1000;
         public static final int NO_OUTPUT_COUNTER_LIMIT = 50;
@@ -69,9 +81,11 @@ public class SoundPlayer {
         private MediaFormat mediaFormat;
         private String mime;
         private MediaCodec decoder;
-        private AudioTrack audioTrack;
-        private AsyncTask<Void, Void, Void> playTask;
+        private TarsosDSPAudioFormat audioFormat;
+        private AsyncTask<Void, Void, Void> decoderTask;
         private boolean stop;
+        private PipedInputStream audioStreamIn;
+        private PipedOutputStream audioStreamOut;
 
         public Sound(String name, AssetFileDescriptor fd) throws IOException {
             this.name = name;
@@ -90,6 +104,14 @@ public class SoundPlayer {
                 throw new Error("Not an audio file: " + name);
             }
 
+            int sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
+            int channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
+
+            audioFormat = new TarsosDSPAudioFormat(sampleRate, 16, channelCount, true, false);
+
+            audioStreamIn = new PipedInputStream();
+            audioStreamOut = new PipedOutputStream(audioStreamIn);
+
             Log.i(TAG, "Created sound " + this.toString());
         }
 
@@ -97,16 +119,17 @@ public class SoundPlayer {
             return name;
         }
 
-        public void play() {
-            if (playTask == null || playTask.getStatus() != AsyncTask.Status.RUNNING) {
-                playTask = new AsyncTask<Void, Void, Void>() {
+        public void start() {
+            if (decoderTask == null || decoderTask.getStatus() != AsyncTask.Status.RUNNING) {
+                stop = false;
+                decoderTask = new AsyncTask<Void, Void, Void>() {
                     @Override
                     protected Void doInBackground(Void... params) {
                         Sound.this.decoderLoop();
                         return null;
                     }
                 };
-                playTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                decoderTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             } else {
                 extractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
             }
@@ -126,23 +149,6 @@ public class SoundPlayer {
             decoder.configure(mediaFormat, null, null, 0);
             decoder.start();
 
-            int sampleRate = mediaFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE);
-            int channelCount = mediaFormat.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-            int channelConfig;
-            if (channelCount == 1) {
-                channelConfig = AudioFormat.CHANNEL_OUT_MONO;
-            } else if (channelCount == 2) {
-                channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
-            } else {
-                throw new Error("Unsupported channel count: " + channelCount);
-            }
-
-            int minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, AudioFormat.ENCODING_PCM_16BIT);
-            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfig,
-                    AudioFormat.ENCODING_PCM_16BIT, minBufferSize, AudioTrack.MODE_STREAM);
-            Log.i(TAG, "Created AudioTrack " + audioTrack.toString());
-
-            audioTrack.play();
             extractor.selectTrack(0);
             MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
             ByteBuffer[] inputBuffers = decoder.getInputBuffers();
@@ -150,7 +156,6 @@ public class SoundPlayer {
             boolean sawInputEOS = false;
             boolean sawOutputEOS = false;
             int noOutputCounter = 0;
-            stop = false;
             while (!sawOutputEOS && noOutputCounter < NO_OUTPUT_COUNTER_LIMIT && !stop) {
                 noOutputCounter++;
                 if (!sawInputEOS) {
@@ -190,8 +195,14 @@ public class SoundPlayer {
                     final byte[] chunk = new byte[info.size];
                     buf.get(chunk);
                     buf.clear();
-                    if (chunk.length > 0)
-                        audioTrack.write(chunk, 0, chunk.length);
+                    if (chunk.length > 0) {
+                        try {
+                            audioStreamOut.write(chunk);
+                        } catch (IOException e) {
+                            Log.e(TAG, "Error writing to audio pipe", e);
+                            stop = true;
+                        }
+                    }
                     decoder.releaseOutputBuffer(res, false /* render */);
                     if ((info.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                         Log.d(TAG, "Output EOS");
@@ -210,23 +221,17 @@ public class SoundPlayer {
 
             Log.d(TAG, "Finished playing sound " + name);
 
-            relaxResources(true);
-
+            releaseResources(true);
             stop = true;
         }
 
-        private void relaxResources(Boolean release) {
+        private void releaseResources(Boolean release) {
             if (decoder != null) {
                 if (release) {
                     decoder.stop();
                     decoder.release();
                     decoder = null;
                 }
-            }
-            if (audioTrack != null) {
-                audioTrack.flush();
-                audioTrack.release();
-                audioTrack = null;
             }
         }
 
@@ -237,6 +242,32 @@ public class SoundPlayer {
                     ", extractor=" + extractor +
                     ", decoder=" + decoder +
                     ", mediaFormat=" + mediaFormat + ']';
+        }
+
+        @Override
+        public long skip(long l) throws IOException {
+            byte[] tmp = new byte[(int) l];
+            return audioStreamIn.read(tmp, (int) l, 0);
+        }
+
+        @Override
+        public int read(byte[] buffer, int offset, int length) throws IOException {
+            return audioStreamIn.read(buffer, offset, length);
+        }
+
+        @Override
+        public void close() throws IOException {
+            releaseResources(false);
+        }
+
+        @Override
+        public TarsosDSPAudioFormat getFormat() {
+            return audioFormat;
+        }
+
+        @Override
+        public long getFrameLength() {
+            return -1;
         }
     }
 }

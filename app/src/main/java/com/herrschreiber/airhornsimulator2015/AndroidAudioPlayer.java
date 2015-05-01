@@ -7,6 +7,7 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
@@ -43,10 +44,11 @@ public class AndroidAudioPlayer implements AudioProcessor {
         } else {
             throw new IllegalArgumentException("Unsupported encoding " + audioFormat.getEncoding());
         }
+        encoding = AudioFormat.ENCODING_PCM_16BIT;
         bufferSize = Math.max(bufferSize, AudioTrack.getMinBufferSize((int) format.getSampleRate(),
                 channelConfig, encoding));
         audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, (int) format.getSampleRate(),
-                channelConfig, encoding, bufferSize * 2, AudioTrack.MODE_STREAM);
+                channelConfig, encoding, bufferSize, AudioTrack.MODE_STREAM);
         audioTrack.play();
         Log.i(TAG, "AndroidAudioPlayer(audioFormat=\"" + audioFormat + "\", bufferSize=\"" + bufferSize + "\")");
         Log.i(TAG, "audioTrack=\"" + audioTrack + "\"");
@@ -54,17 +56,23 @@ public class AndroidAudioPlayer implements AudioProcessor {
 
     @Override
     public boolean process(AudioEvent audioEvent) {
-        int byteOverlap = audioEvent.getOverlap() * format.getFrameSize();
+        int offset;
         if (audioEvent.getTimeStamp() == 0) {
-            byteOverlap = 0;
-        }
-        int byteStepSize = audioEvent.getBufferSize() * format.getFrameSize() - byteOverlap;
-        if (format.getFrameSize() == 2) {
-            short[] shorts = new short[audioEvent.getBufferSize() / 2];
-            ByteBuffer.wrap(audioEvent.getByteBuffer()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
-            audioTrack.write(shorts, byteOverlap * 2, byteStepSize * 2);
+            offset = 0;
         } else {
-            audioTrack.write(audioEvent.getByteBuffer(), byteOverlap, byteStepSize);
+            offset = audioEvent.getOverlap();
+        }
+        int length = audioEvent.getBufferSize() - offset;
+        int ret;
+        if (format.getSampleSizeInBits() == 16 ) {
+            short[] shorts = new short[audioEvent.getBufferSize()];
+            ByteBuffer.wrap(audioEvent.getByteBuffer()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
+            ret = audioTrack.write(shorts, offset, length);
+        } else {
+            ret = audioTrack.write(audioEvent.getByteBuffer(), offset, length);
+        }
+        if (ret < 0) {
+            Log.e(TAG, "AudioTrack.write returned error code " + ret);
         }
         return true;
     }
