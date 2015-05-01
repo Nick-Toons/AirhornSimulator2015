@@ -57,3 +57,16 @@ only FOSS and pure java audio processing library that I could find. Any others e
 components or are not free, which makes them more difficult to use. I am hoping to get a working
 example by next week, but it did take a bit of work to get this library to be recognized by android
 studio and gradle.
+
+## 5/1/2015
+It has been a while since I have done a dev journal because I am lazy and had FRC competitions and
+stuff, but I have finally figured out how to use TarsosDSP with android audio. I have created the
+AndroidAudioPlayer class for playing audio from TarsosDSP on android, and it works very well. I have
+also made the Sound class able to read an audio stream from a file using the android MediaCodec api.
+The only issue is that there is a lack of throughput with the audio decoding, and the audio stream is
+slightly corrupted. It also crashes sometimes. I need to learn more about MediaCodec to fix these
+issues. The next step is to fix the issues with Sound, and then to add the pitch shifting to the
+audio pipeline. The first issue is much more difficult than the second. The corruption of the audio
+may be because it is two channel audio. I'm not sure why the throughput is too low, but it may be
+overhead with TarsosDSP or the streams I'm using to transfer data between threads. It worked much
+better with MediaCodec directly piped to AudioTrack, so it isn't an intrinsic issue with MediaCodec.
