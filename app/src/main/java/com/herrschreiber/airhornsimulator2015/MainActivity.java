@@ -2,6 +2,7 @@ package com.herrschreiber.airhornsimulator2015;
 
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -10,16 +11,19 @@ import android.widget.ArrayAdapter;
 import android.widget.GridView;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
 public class MainActivity extends ActionBarActivity {
-    private SoundPlayer player;
+    private static final String TAG = "MainActivity";
     @InjectView(R.id.sounds)
     protected GridView soundsList;
+    private SoundPlayer player;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,14 +34,27 @@ public class MainActivity extends ActionBarActivity {
         try {
             player.loadSounds(this);
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error loading sounds", e);
         }
-        List<SoundPlayer.Sound> sounds = player.getSounds();
-        soundsList.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, sounds));
+        Map<String, Sound> sounds = player.getSounds();
+        List<NoteInfo> song = new ArrayList<>();
+        song.add(new NoteInfo(0.0, 0.5, 261.63, 1.0));
+        song.add(new NoteInfo(0.5, 0.5, 293.66, 1.0));
+        song.add(new NoteInfo(1.0, 0.5, 329.63, 1.0));
+        song.add(new NoteInfo(1.5, 0.5, 349.23, 1.0));
+        song.add(new NoteInfo(2.0, 0.5, 392.00, 1.0));
+        song.add(new NoteInfo(2.5, 0.5, 440.00, 1.0));
+        song.add(new NoteInfo(3.0, 0.5, 493.88, 1.0));
+        song.add(new NoteInfo(3.5, 0.5, 523.25, 1.0));
+        AssetSound sample = (AssetSound) sounds.get("airhorn.mp3");
+        SampledSongSound melody = new SampledSongSound("melody", sample, song);
+        melody.init();
+        sounds.put("melody", melody);
+        soundsList.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(sounds.values())));
         soundsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                player.playSound((SoundPlayer.Sound) parent.getItemAtPosition(position));
+                player.playSound((Sound) parent.getItemAtPosition(position));
             }
         });
     }
