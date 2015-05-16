@@ -24,7 +24,7 @@ public class SineGenerator implements AudioProcessor {
     public boolean process(AudioEvent audioEvent) {
         float[] buffer = audioEvent.getFloatBuffer();
         double sampleRate = audioEvent.getSampleRate();
-        for (int i = 0; i < buffer.length; i++) {
+        for (int i = audioEvent.getOverlap(); i < buffer.length; i++) {
             buffer[i] = (float) Math.sin(phase);
             phase += 2 * Math.PI * frequency / sampleRate;
         }

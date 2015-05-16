@@ -9,7 +9,10 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd;
@@ -21,36 +24,38 @@ import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd.Parameters;
 public class SoundPlayer {
     private static final String SOUNDS_PATH = "Sounds";
     private static final String TAG = "SoundPlayer";
-    private final List<Sound> sounds;
+    public static final int AUDIO_BUFFER_SIZE = 1024;
+    private final Map<String, Sound> sounds;
     private AudioDispatcher audioDispatcher;
 
     public SoundPlayer() {
-        sounds = new ArrayList<>();
+        sounds = new HashMap<>();
     }
 
     public void loadSounds(Context context) throws IOException {
-        AssetManager am = context.getAssets();
+        AssetManager assetManager = context.getAssets();
         String[] soundNames;
         try {
-            soundNames = am.list(SOUNDS_PATH);
+            soundNames = assetManager.list(SOUNDS_PATH);
         } catch (IOException e) {
             throw new IOException("Failed to list sounds while loading sounds", e);
         }
         for (String soundName : soundNames) {
             Log.d("SoundPlayer", "Adding sound " + soundName);
-            AssetFileDescriptor fd = am.openFd(new File(SOUNDS_PATH, soundName).getPath());
-            Sound sound = null;
+            String path = new File(SOUNDS_PATH, soundName).getPath();
+            Sound sound;
             try {
-                sound = new Sound(soundName, fd);
+                sound = new AssetSound(soundName, path, assetManager);
             } catch (Exception e) {
-                e.printStackTrace();
-                Log.e(TAG, "Error creating sound", e);
+                Log.e(TAG, "Error creating sound with path " + path, e);
+                continue;
             }
-            sounds.add(sound);
+            sound.init();
+            sounds.put(sound.getName(), sound);
         }
     }
 
-    public List<Sound> getSounds() {
+    public Map<String, Sound> getSounds() {
         return sounds;
     }
 
@@ -59,12 +64,12 @@ public class SoundPlayer {
             audioDispatcher.stop();
         sound.start();
 
-        double sampleRate = sound.getSampleRate();
+        double sampleRate = sound.getFormat().getSampleRate();
         WaveformSimilarityBasedOverlapAdd wsola = new WaveformSimilarityBasedOverlapAdd(Parameters.slowdownDefaults(2.0, sampleRate));
         audioDispatcher = new AudioDispatcher(sound, wsola.getInputBufferSize(), wsola.getOverlap());
         wsola.setDispatcher(audioDispatcher);
-        audioDispatcher.addAudioProcessor(wsola);
-        audioDispatcher.addAudioProcessor(new AndroidAudioPlayer(audioDispatcher.getFormat(), 1024));
+//        audioDispatcher.addAudioProcessor(wsola);
+        audioDispatcher.addAudioProcessor(new AndroidAudioPlayer(audioDispatcher.getFormat(), AUDIO_BUFFER_SIZE));
         AsyncTask.THREAD_POOL_EXECUTOR.execute(audioDispatcher);
     }
 

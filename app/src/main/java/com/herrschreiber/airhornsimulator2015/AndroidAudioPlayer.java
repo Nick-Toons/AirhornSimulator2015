@@ -42,10 +42,8 @@ public class AndroidAudioPlayer implements AudioProcessor {
         }
         short[] buffer = new short[audioEvent.getBufferSize()];
         ByteBuffer.wrap(audioEvent.getByteBuffer()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(buffer);
-        Log.i(TAG, "overlap: " + audioEvent.getOverlap() + ", bufferSize: " + audioEvent.getBufferSize());
         int offset = audioEvent.getOverlap();
         int size = audioEvent.getBufferSize() - offset;
-        Log.i(TAG, "length: " + buffer.length + ", offset: " + offset + ", size: " + size);
         int ret = audioTrack.write(buffer, offset, size);
         if (ret < 0) {
             Log.e(TAG, "AudioTrack.write returned error code " + ret);
