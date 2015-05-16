@@ -7,7 +7,6 @@ import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 import be.tarsos.dsp.AudioEvent;
 import be.tarsos.dsp.AudioProcessor;
@@ -18,59 +17,36 @@ import be.tarsos.dsp.io.TarsosDSPAudioFormat;
  */
 public class AndroidAudioPlayer implements AudioProcessor {
     private static final String TAG = "AndroidAudioPlayer";
-    private AudioTrack audioTrack;
+    private final int bufferSize;
     private final TarsosDSPAudioFormat format;
+    private AudioTrack audioTrack;
+    private int channelConfig;
+    private int encoding;
 
     public AndroidAudioPlayer(TarsosDSPAudioFormat audioFormat, int bufferSize) {
         format = audioFormat;
-        int channelConfig;
-        if (format.getChannels() == 1) {
-            channelConfig = AudioFormat.CHANNEL_OUT_MONO;
-        } else if (format.getChannels() == 2) {
-            channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
-        } else {
-            throw new IllegalArgumentException("Unsupported channel count " + format.getChannels());
-        }
-        int encoding;
-        if (audioFormat.getEncoding() == TarsosDSPAudioFormat.Encoding.PCM_SIGNED ||
-                audioFormat.getEncoding() == TarsosDSPAudioFormat.Encoding.PCM_UNSIGNED) {
-            if (format.getSampleSizeInBits() == 16) {
-                encoding = AudioFormat.ENCODING_PCM_16BIT;
-            } else if (format.getSampleRate() == 8) {
-                encoding = AudioFormat.ENCODING_PCM_8BIT;
-            } else {
-                throw new IllegalArgumentException("Unsupported sample size " + format.getSampleSizeInBits());
-            }
-        } else {
-            throw new IllegalArgumentException("Unsupported encoding " + audioFormat.getEncoding());
-        }
+        channelConfig = AudioFormat.CHANNEL_OUT_MONO;
         encoding = AudioFormat.ENCODING_PCM_16BIT;
-        bufferSize = Math.max(bufferSize, AudioTrack.getMinBufferSize((int) format.getSampleRate(),
+        this.bufferSize = Math.max(bufferSize, AudioTrack.getMinBufferSize((int) format.getSampleRate(),
                 channelConfig, encoding));
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, (int) format.getSampleRate(),
-                channelConfig, encoding, bufferSize, AudioTrack.MODE_STREAM);
-        audioTrack.play();
-        Log.i(TAG, "AndroidAudioPlayer(audioFormat=\"" + audioFormat + "\", bufferSize=\"" + bufferSize + "\")");
-        Log.i(TAG, "audioTrack=\"" + audioTrack + "\"");
+        Log.i(TAG, "AndroidAudioPlayer(audioFormat=\"" + audioFormat + "\", bufferSize=\"" + this.bufferSize + "\")");
     }
 
     @Override
     public boolean process(AudioEvent audioEvent) {
-        int offset;
-        if (audioEvent.getTimeStamp() == 0) {
-            offset = 0;
-        } else {
-            offset = audioEvent.getOverlap();
+        if (audioTrack == null) {
+            audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, (int) format.getSampleRate(),
+                    channelConfig, encoding, bufferSize, AudioTrack.MODE_STREAM);
+            audioTrack.play();
+            Log.i(TAG, "audioTrack=\"" + audioTrack + "\"");
         }
-        int length = audioEvent.getBufferSize() - offset;
-        int ret;
-        if (format.getSampleSizeInBits() == 16 ) {
-            short[] shorts = new short[audioEvent.getBufferSize()];
-            ByteBuffer.wrap(audioEvent.getByteBuffer()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shorts);
-            ret = audioTrack.write(shorts, offset, length);
-        } else {
-            ret = audioTrack.write(audioEvent.getByteBuffer(), offset, length);
-        }
+        short[] buffer = new short[audioEvent.getBufferSize()];
+        ByteBuffer.wrap(audioEvent.getByteBuffer()).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(buffer);
+        Log.i(TAG, "overlap: " + audioEvent.getOverlap() + ", bufferSize: " + audioEvent.getBufferSize());
+        int offset = audioEvent.getOverlap();
+        int size = audioEvent.getBufferSize() - offset;
+        Log.i(TAG, "length: " + buffer.length + ", offset: " + offset + ", size: " + size);
+        int ret = audioTrack.write(buffer, offset, size);
         if (ret < 0) {
             Log.e(TAG, "AudioTrack.write returned error code " + ret);
         }
@@ -80,8 +56,11 @@ public class AndroidAudioPlayer implements AudioProcessor {
     @Override
     public void processingFinished() {
         Log.w(TAG, "processingFinished");
-        audioTrack.flush();
-        audioTrack.stop();
-        audioTrack.release();
+        if (audioTrack != null) {
+            audioTrack.flush();
+            audioTrack.stop();
+            audioTrack.release();
+            audioTrack = null;
+        }
     }
 }

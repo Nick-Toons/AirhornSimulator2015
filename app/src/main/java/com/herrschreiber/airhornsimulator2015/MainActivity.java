@@ -17,9 +17,9 @@ import butterknife.InjectView;
 
 
 public class MainActivity extends ActionBarActivity {
-    private SoundPlayer player;
     @InjectView(R.id.sounds)
     protected GridView soundsList;
+    private SoundPlayer player;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,12 +32,12 @@ public class MainActivity extends ActionBarActivity {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        List<SoundPlayer.Sound> sounds = player.getSounds();
+        List<Sound> sounds = player.getSounds();
         soundsList.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, sounds));
         soundsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                player.playSound((SoundPlayer.Sound) parent.getItemAtPosition(position));
+                player.playSound((Sound) parent.getItemAtPosition(position));
             }
         });
     }

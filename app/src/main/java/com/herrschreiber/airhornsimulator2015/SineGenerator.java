@@ -6,16 +6,16 @@ import be.tarsos.dsp.AudioProcessor;
 /**
  * Created by alex on 4/10/15.
  */
-public class SquareGenerator implements AudioProcessor {
+public class SineGenerator implements AudioProcessor {
     private float gain;
     private double frequency;
     private double phase;
 
-    public SquareGenerator() {
+    public SineGenerator() {
         this(1.0f, 440);
     }
 
-    public SquareGenerator(float gain, double frequency) {
+    public SineGenerator(float gain, double frequency) {
         this.gain = gain;
         this.frequency = frequency;
     }
@@ -25,7 +25,7 @@ public class SquareGenerator implements AudioProcessor {
         float[] buffer = audioEvent.getFloatBuffer();
         double sampleRate = audioEvent.getSampleRate();
         for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = Math.sin(phase) > 0 ? gain : -gain;
+            buffer[i] = (float) Math.sin(phase);
             phase += 2 * Math.PI * frequency / sampleRate;
         }
         return true;
