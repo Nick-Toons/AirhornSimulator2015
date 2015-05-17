@@ -1,19 +1,25 @@
 package com.herrschreiber.airhornsimulator2015;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -23,59 +29,43 @@ public class MainActivity extends ActionBarActivity {
     private static final String TAG = "MainActivity";
     @InjectView(R.id.sounds)
     protected GridView soundsList;
-    private SoundPlayer player;
+    private SoundPlayer soundPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
-        player = new SoundPlayer();
+
+        soundPlayer = ((AirhornSimulatorApplication) getApplication()).getSoundPlayer();
+
         try {
-            player.loadSounds(this);
+            soundPlayer.loadSounds();
         } catch (IOException e) {
             Log.e(TAG, "Error loading sounds", e);
         }
-        Map<String, Sound> sounds = player.getSounds();
-        List<NoteInfo> song = new ArrayList<>();
-        song.add(new NoteInfo(0.0, 0.5, 261.63, 1.0));
-        song.add(new NoteInfo(0.5, 0.5, 293.66, 1.0));
-        song.add(new NoteInfo(1.0, 0.5, 329.63, 1.0));
-        song.add(new NoteInfo(1.5, 0.5, 349.23, 1.0));
-        song.add(new NoteInfo(2.0, 0.5, 392.00, 1.0));
-        song.add(new NoteInfo(2.5, 0.5, 440.00, 1.0));
-        song.add(new NoteInfo(3.0, 0.5, 493.88, 1.0));
-        song.add(new NoteInfo(3.5, 0.5, 523.25, 1.0));
-        AssetSound sample = (AssetSound) sounds.get("airhorn.mp3");
-        SampledSongSound melody = new SampledSongSound("melody", sample, song);
-        melody.init();
-        sounds.put("melody", melody);
-        soundsList.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>(sounds.values())));
+
+        List<AssetSound> sounds = soundPlayer.listSounds();
+        soundsList.setAdapter(new SoundListAdapter(this, sounds));
         soundsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                player.playSound((Sound) parent.getItemAtPosition(position));
+                soundPlayer.playSound((Sound) parent.getItemAtPosition(position));
             }
         });
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (item.getItemId()) {
+            case R.id.action_settings:
+                break;
         }
 
         return super.onOptionsItemSelected(item);
@@ -83,17 +73,62 @@ public class MainActivity extends ActionBarActivity {
 
     public boolean areAllItemsEnabled() {
         boolean x = true;
-        for (int i = 0; i < player.getSounds().size() && x; i++) {
+        for (int i = 0; i < soundPlayer.getSounds().size() && x; i++) {
             x = isEnabled(i);
         }
         return x;
     }
 
     public boolean isEnabled(int position) {
-        if (position > player.getSounds().size() || position < 0) {
+        if (position > soundPlayer.getSounds().size() || position < 0) {
             throw new ArrayIndexOutOfBoundsException();
         } else {
             return true;
+        }
+    }
+
+    public static class SoundListAdapter extends ArrayAdapter<AssetSound> {
+        public SoundListAdapter(Context context, List<AssetSound> sounds) {
+            super(context, R.layout.item_sound, sounds);
+        }
+
+        @Override
+        public View getView(int position, View view, ViewGroup parent) {
+            ViewHolder viewHolder;
+            if (view == null) {
+                LayoutInflater inflater = (LayoutInflater) getContext()
+                        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                view = inflater.inflate(R.layout.item_sound, parent, false);
+                viewHolder = new ViewHolder(view);
+                view.setTag(viewHolder);
+            } else {
+                viewHolder = (ViewHolder) view.getTag();
+            }
+            final AssetSound item = getItem(position);
+            viewHolder.soundIcon.setImageDrawable(item.getIcon());
+            viewHolder.soundName.setText(item.getName());
+            viewHolder.buttonSongs.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(getContext(), SongsActivity.class);
+                    intent.putExtra(SongsActivity.KEY_SOUND_NAME, item.getName());
+                    getContext().startActivity(intent);
+                }
+            });
+            return view;
+        }
+
+        public class ViewHolder {
+            @InjectView(R.id.sound_icon)
+            public ImageView soundIcon;
+            @InjectView(R.id.sound_name)
+            public TextView soundName;
+            @InjectView(R.id.button_songs)
+            public Button buttonSongs;
+
+            public ViewHolder(View view) {
+                ButterKnife.inject(this, view);
+            }
         }
     }
 }

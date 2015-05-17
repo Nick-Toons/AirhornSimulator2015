@@ -1,7 +1,9 @@
 package com.herrschreiber.airhornsimulator2015;
 
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
+import android.graphics.drawable.Drawable;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -11,6 +13,7 @@ import android.util.Log;
 import com.google.common.math.DoubleMath;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -30,12 +33,15 @@ import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
  * Created by alex on 5/6/15.
  */
 public class AssetSound extends Sound {
+    public static final String AUDIO_PATH = "Sounds";
+    public static final String ICON_PATH = "Sounds";
     public static final String TAG = "Sound";
     public static final long TIMEOUT_US = 1000;
     public static final int NO_OUTPUT_COUNTER_LIMIT = 50;
     public static final int AUDIO_BUFFER_SIZE = 1024;
     private String path;
-    private AssetManager assetManager;
+    private Context context;
+    private Drawable icon;
     private MediaExtractor extractor;
     private int channelCount;
     private MediaFormat mediaFormat;
@@ -43,18 +49,31 @@ public class AssetSound extends Sound {
     private ByteArrayOutputStream byteStream;
     private double averagePitch;
 
-    public AssetSound(String name, String path, AssetManager assetManager) throws IOException {
-        super(name);
+    public AssetSound(String path, Context context) throws IOException {
+        super(nameFromPath(path));
         this.path = path;
-        this.assetManager = assetManager;
+        this.context = context;
 
         Log.i(TAG, "Created sound " + this.toString());
     }
 
+    private static String nameFromPath(String path) {
+        int pos = path.indexOf('.');
+        if (pos != -1) {
+            path = path.substring(0, pos);
+        }
+        return path;
+    }
+
     @Override
     public void init() throws IOException {
+        icon = Drawable.createFromPath(new File(ICON_PATH, getName() + ".png").getPath());
+        if (icon == null) {
+            icon = context.getResources().getDrawable(R.drawable.ic_image_audiotrack);
+        }
+
         extractor = new MediaExtractor();
-        AssetFileDescriptor fd = assetManager.openFd(path);
+        AssetFileDescriptor fd = context.getAssets().openFd(new File(AUDIO_PATH, path).getPath());
         extractor.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
         fd.close();
 
@@ -213,5 +232,9 @@ public class AssetSound extends Sound {
     @Override
     public String toString() {
         return "AssetSound{" + "name='" + getName() + '\'' + '}';
+    }
+
+    public Drawable getIcon() {
+        return icon;
     }
 }

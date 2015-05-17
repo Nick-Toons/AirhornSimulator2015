@@ -18,9 +18,9 @@ import be.tarsos.dsp.resample.RateTransposer;
 public class SampledSongSound extends Sound {
     private static final String TAG = "SampledSongSound";
     private AssetSound sample;
-    private List<NoteInfo> song;
+    private Song song;
 
-    public SampledSongSound(String name, AssetSound sample, List<NoteInfo> song) {
+    public SampledSongSound(String name, AssetSound sample, Song song) {
         super(name);
         this.sample = sample;
         this.song = song;
@@ -31,8 +31,8 @@ public class SampledSongSound extends Sound {
         setAudioFormat(sample.getFormat());
 
         double duration = 0;
-        for (NoteInfo note : song) {
-            double endTime = note.getStartTime() + note.getDuration();
+        for (NoteInfo note : song.getNotes()) {
+            double endTime = note.getStartTime() + note.getDuration() + .01; // To compensate for math error
             if (endTime > duration) {
                 duration = endTime;
             }
@@ -43,7 +43,7 @@ public class SampledSongSound extends Sound {
         final float[] floatBuffer = new float[(int) (duration * sampleRate)];
         final double sampleDuration = sample.getDuration();
 
-        for (final NoteInfo note : song) {
+        for (final NoteInfo note : song.getNotes()) {
             double noteDuration = note.getDuration();
             double pitchFactor = sample.getAveragePitch() / note.getPitch();
             double durationFactor = sampleDuration / noteDuration * pitchFactor;

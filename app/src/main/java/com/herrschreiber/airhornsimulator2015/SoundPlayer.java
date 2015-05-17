@@ -22,32 +22,32 @@ import be.tarsos.dsp.WaveformSimilarityBasedOverlapAdd.Parameters;
  * Created by alex on 2/13/15.
  */
 public class SoundPlayer {
-    private static final String SOUNDS_PATH = "Sounds";
     private static final String TAG = "SoundPlayer";
     public static final int AUDIO_BUFFER_SIZE = 1024;
-    private final Map<String, Sound> sounds;
+    private final Map<String, AssetSound> sounds;
     private AudioDispatcher audioDispatcher;
+    private Context context;
 
-    public SoundPlayer() {
+    public SoundPlayer(Context context) {
+        this.context = context;
         sounds = new HashMap<>();
     }
 
-    public void loadSounds(Context context) throws IOException {
+    public void loadSounds() throws IOException {
         AssetManager assetManager = context.getAssets();
-        String[] soundNames;
+        String[] soundPaths;
         try {
-            soundNames = assetManager.list(SOUNDS_PATH);
+            soundPaths = assetManager.list(AssetSound.AUDIO_PATH);
         } catch (IOException e) {
             throw new IOException("Failed to list sounds while loading sounds", e);
         }
-        for (String soundName : soundNames) {
-            Log.d("SoundPlayer", "Adding sound " + soundName);
-            String path = new File(SOUNDS_PATH, soundName).getPath();
-            Sound sound;
+        for (String soundPath : soundPaths) {
+            Log.d("SoundPlayer", "Adding sound " + soundPath);
+            AssetSound sound;
             try {
-                sound = new AssetSound(soundName, path, assetManager);
+                sound = new AssetSound(soundPath, context);
             } catch (Exception e) {
-                Log.e(TAG, "Error creating sound with path " + path, e);
+                Log.e(TAG, "Error creating sound with path " + soundPath, e);
                 continue;
             }
             sound.init();
@@ -55,8 +55,12 @@ public class SoundPlayer {
         }
     }
 
-    public Map<String, Sound> getSounds() {
+    public Map<String, AssetSound> getSounds() {
         return sounds;
+    }
+
+    public List<AssetSound> listSounds() {
+        return new ArrayList<>(sounds.values());
     }
 
     public void playSound(final Sound sound) {

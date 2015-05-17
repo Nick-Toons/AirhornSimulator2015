@@ -3,5 +3,10 @@
 
     <string name="app_name">Airhorn Simulator 2015</string>
     <string name="action_settings">Settings</string>
+    <string name="description_sound_icon">Icon for sound</string>
+    <string name="sound_name">Sound Name</string>
+    <string name="sound_songs">Songs</string>
+    <string name="title_activity_songs">SongsActivity</string>
+    <string name="song_name">Song Name</string>
 
 </resources>
