@@ -8,9 +8,21 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity">
 
+    <ViewSwitcher
+        android:id="@+id/sounds_switcher"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    <GridView
-        android:id="@+id/sounds"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+        <ProgressBar
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+
+        <GridView
+            android:id="@+id/sounds"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </ViewSwitcher>
 </FrameLayout>

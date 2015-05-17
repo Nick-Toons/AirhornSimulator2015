@@ -1,6 +1,7 @@
 package com.herrschreiber.airhornsimulator2015;
 
 import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -14,17 +15,17 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.ViewSwitcher;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
-public class SongsActivity extends ActionBarActivity {
+public class SongsActivity extends ActionBarActivity implements AdapterView.OnItemClickListener {
     public static final String KEY_SOUND_NAME = "SOUND_NAME";
     private static final String TAG = "SongsActivity";
     @InjectView(R.id.songs)
@@ -54,17 +55,11 @@ public class SongsActivity extends ActionBarActivity {
         List<SampledSongSound> sampledSongs = new ArrayList<>();
         for (Song song : songs) {
             SampledSongSound sampledSong = new SampledSongSound(sound.getName() + " - " + song.getName(), sound, song);
-            sampledSong.init();
             sampledSongs.add(sampledSong);
         }
 
         songList.setAdapter(new SongsListAdapter(this, sampledSongs));
-        songList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                soundPlayer.playSound((Sound) parent.getItemAtPosition(position));
-            }
-        });
+        songList.setOnItemClickListener(this);
     }
 
     @Override
@@ -81,6 +76,38 @@ public class SongsActivity extends ActionBarActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        final SampledSongSound sound = (SampledSongSound) parent.getItemAtPosition(position);
+        if (sound.hasInitialized()) {
+            soundPlayer.playSound(sound);
+        } else {
+            final ViewSwitcher viewSwitcher = (ViewSwitcher) view;
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected void onPreExecute() {
+                    viewSwitcher.showNext();
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    viewSwitcher.showPrevious();
+                    soundPlayer.playSound(sound);
+                }
+
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        sound.initialize();
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error initializing sound", e);
+                    }
+                    return null;
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
     }
 
     public static class SongsListAdapter extends ArrayAdapter<SampledSongSound> {

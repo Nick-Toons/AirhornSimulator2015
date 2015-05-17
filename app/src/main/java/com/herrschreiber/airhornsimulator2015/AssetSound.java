@@ -2,19 +2,16 @@ package com.herrschreiber.airhornsimulator2015;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.os.AsyncTask;
 import android.util.Log;
 
 import com.google.common.math.DoubleMath;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -34,7 +31,7 @@ import be.tarsos.dsp.pitch.PitchProcessor.PitchEstimationAlgorithm;
  */
 public class AssetSound extends Sound {
     public static final String AUDIO_PATH = "Sounds";
-    public static final String ICON_PATH = "Sounds";
+    public static final String ICON_PATH = "Icons";
     public static final String TAG = "Sound";
     public static final long TIMEOUT_US = 1000;
     public static final int NO_OUTPUT_COUNTER_LIMIT = 50;
@@ -53,6 +50,10 @@ public class AssetSound extends Sound {
         super(nameFromPath(path));
         this.path = path;
         this.context = context;
+        icon = Drawable.createFromPath(new File(ICON_PATH, getName() + ".png").getPath());
+        if (icon == null) {
+            icon = context.getResources().getDrawable(R.drawable.ic_image_audiotrack);
+        }
 
         Log.i(TAG, "Created sound " + this.toString());
     }
@@ -67,10 +68,6 @@ public class AssetSound extends Sound {
 
     @Override
     public void init() throws IOException {
-        icon = Drawable.createFromPath(new File(ICON_PATH, getName() + ".png").getPath());
-        if (icon == null) {
-            icon = context.getResources().getDrawable(R.drawable.ic_image_audiotrack);
-        }
 
         extractor = new MediaExtractor();
         AssetFileDescriptor fd = context.getAssets().openFd(new File(AUDIO_PATH, path).getPath());
@@ -204,7 +201,11 @@ public class AssetSound extends Sound {
             }
         }));
         audioDispatcher.run();
-        averagePitch = DoubleMath.mean(pitches);
+        if (pitches.isEmpty()) {
+            averagePitch = 120; // just a guess
+        } else {
+            averagePitch = DoubleMath.mean(pitches);
+        }
     }
 
     private byte[] stereoToMono(byte[] chunk) {

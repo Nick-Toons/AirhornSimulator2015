@@ -2,7 +2,7 @@ package com.herrschreiber.airhornsimulator2015;
 
 import android.util.Log;
 
-import java.util.List;
+import java.io.IOException;
 
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
@@ -27,7 +27,8 @@ public class SampledSongSound extends Sound {
     }
 
     @Override
-    public void init() {
+    public void init() throws IOException {
+        sample.initialize();
         setAudioFormat(sample.getFormat());
 
         double duration = 0;

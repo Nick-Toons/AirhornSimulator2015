@@ -2,7 +2,6 @@ package com.herrschreiber.airhornsimulator2015;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import be.tarsos.dsp.io.TarsosDSPAudioFormat;
 import be.tarsos.dsp.io.TarsosDSPAudioInputStream;
@@ -15,12 +14,24 @@ public abstract class Sound implements TarsosDSPAudioInputStream {
     private String name;
     private TarsosDSPAudioFormat audioFormat;
     private ByteArrayInputStream byteStream = null;
+    private boolean hasInitialized = false;
 
     public Sound(String name) {
         this.name = name;
     }
 
-    public abstract void init() throws IOException;
+    protected abstract void init() throws IOException;
+
+    public void initialize() throws IOException {
+        if (!hasInitialized()) {
+            init();
+            hasInitialized = true;
+        }
+    }
+
+    public boolean hasInitialized() {
+        return hasInitialized;
+    }
 
     public void start() {
         if (byteStream == null) {

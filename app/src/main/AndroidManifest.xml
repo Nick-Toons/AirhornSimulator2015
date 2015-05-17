@@ -19,7 +19,7 @@
         </activity>
         <activity
             android:name=".SongsActivity"
-            android:label="@string/title_activity_songs"/>
+            android:label="@string/title_activity_songs" />
     </application>
 
 </manifest>

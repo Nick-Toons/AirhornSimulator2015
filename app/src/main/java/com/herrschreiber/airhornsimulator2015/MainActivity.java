@@ -2,6 +2,7 @@ package com.herrschreiber.airhornsimulator2015;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -16,17 +17,19 @@ import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.ViewSwitcher;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements AdapterView.OnItemClickListener {
     private static final String TAG = "MainActivity";
+    @InjectView(R.id.sounds_switcher)
+    protected ViewSwitcher soundsSwitcher;
     @InjectView(R.id.sounds)
     protected GridView soundsList;
     private SoundPlayer soundPlayer;
@@ -39,20 +42,30 @@ public class MainActivity extends ActionBarActivity {
 
         soundPlayer = ((AirhornSimulatorApplication) getApplication()).getSoundPlayer();
 
-        try {
-            soundPlayer.loadSounds();
-        } catch (IOException e) {
-            Log.e(TAG, "Error loading sounds", e);
-        }
-
-        List<AssetSound> sounds = soundPlayer.listSounds();
-        soundsList.setAdapter(new SoundListAdapter(this, sounds));
-        soundsList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        new AsyncTask<Void, Void, Void>() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                soundPlayer.playSound((Sound) parent.getItemAtPosition(position));
+            protected void onPreExecute() {
             }
-        });
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                soundsSwitcher.showNext();
+            }
+
+            @Override
+            protected Void doInBackground(final Void... params) {
+                try {
+                    soundPlayer.loadSounds();
+                } catch (IOException e) {
+                    Log.e(TAG, "Error loading sounds", e);
+                }
+
+                List<AssetSound> sounds = soundPlayer.listSounds();
+                soundsList.setAdapter(new SoundListAdapter(MainActivity.this, sounds));
+                soundsList.setOnItemClickListener(MainActivity.this);
+                return null;
+            }
+        }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     @Override
@@ -87,7 +100,39 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    public static class SoundListAdapter extends ArrayAdapter<AssetSound> {
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        final AssetSound sound = (AssetSound) parent.getItemAtPosition(position);
+        if (sound.hasInitialized()) {
+            soundPlayer.playSound(sound);
+        } else {
+            final ViewSwitcher viewSwitcher = (ViewSwitcher) view;
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected void onPreExecute() {
+                    viewSwitcher.showNext();
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    viewSwitcher.showPrevious();
+                    soundPlayer.playSound(sound);
+                }
+
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        sound.initialize();
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error initializing sound", e);
+                    }
+                    return null;
+                }
+            }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+    }
+
+    public class SoundListAdapter extends ArrayAdapter<AssetSound> {
         public SoundListAdapter(Context context, List<AssetSound> sounds) {
             super(context, R.layout.item_sound, sounds);
         }

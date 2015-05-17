@@ -19,36 +19,36 @@ public class NoteInfo {
         this.velocity = velocity;
     }
 
-    public void setStartTime(double startTime) {
-        this.startTime = startTime;
-    }
-
-    public void setDuration(double duration) {
-        this.duration = duration;
-    }
-
-    public void setPitch(double pitch) {
-        this.pitch = pitch;
-    }
-
-    public void setVelocity(double velocity) {
-        this.velocity = velocity;
-    }
-
     public double getStartTime() {
         return startTime;
+    }
+
+    public void setStartTime(double startTime) {
+        this.startTime = startTime;
     }
 
     public double getDuration() {
         return duration;
     }
 
+    public void setDuration(double duration) {
+        this.duration = duration;
+    }
+
     public double getPitch() {
         return pitch;
     }
 
+    public void setPitch(double pitch) {
+        this.pitch = pitch;
+    }
+
     public double getVelocity() {
         return velocity;
+    }
+
+    public void setVelocity(double velocity) {
+        this.velocity = velocity;
     }
 
     @Override
