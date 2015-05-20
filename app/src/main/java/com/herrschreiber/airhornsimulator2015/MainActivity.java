@@ -45,6 +45,8 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
         ButterKnife.inject(this);
 
+        setTitle(getResources().getString(R.string.title_main_activity));
+
         soundPlayer = ((AirhornSimulatorApplication) getApplication()).getSoundPlayer();
 
         try {
