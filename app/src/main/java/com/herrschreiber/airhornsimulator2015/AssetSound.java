@@ -52,7 +52,8 @@ public class AssetSound extends Sound {
         super(nameFromPath(path));
         this.path = path;
         this.context = context;
-        icon = Drawable.createFromPath(new File(ICON_PATH, getName() + ".png").getPath());
+        String iconPath = new File(ICON_PATH, getName() + ".png").getPath();
+        icon = Drawable.createFromStream(context.getAssets().open(iconPath), null);
         if (icon == null) {
             icon = context.getResources().getDrawable(R.drawable.ic_image_audiotrack);
         }

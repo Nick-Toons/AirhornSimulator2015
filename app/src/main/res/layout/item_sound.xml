@@ -12,12 +12,13 @@
 
         <ImageView
             android:id="@+id/sound_icon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
+            android:contentDescription="@string/description_sound_icon"
             android:src="@drawable/ic_image_audiotrack" />
 
         <TextView

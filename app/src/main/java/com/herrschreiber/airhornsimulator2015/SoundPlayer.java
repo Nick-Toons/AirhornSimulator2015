@@ -2,6 +2,7 @@ package com.herrschreiber.airhornsimulator2015;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.media.AudioManager;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -72,7 +73,7 @@ public class SoundPlayer {
         sound.start();
 
         audioDispatcher = new AudioDispatcher(sound, AUDIO_BUFFER_SIZE, AUDIO_BUFFER_SIZE / 2);
-        audioDispatcher.addAudioProcessor(new AndroidAudioPlayer(audioDispatcher.getFormat(), AUDIO_BUFFER_SIZE));
+        audioDispatcher.addAudioProcessor(new AndroidAudioPlayer(audioDispatcher.getFormat(), AUDIO_BUFFER_SIZE, AudioManager.STREAM_MUSIC));
         AsyncTask.THREAD_POOL_EXECUTOR.execute(audioDispatcher);
     }
 
