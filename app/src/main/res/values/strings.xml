@@ -6,7 +6,9 @@
     <string name="description_sound_icon">Icon for sound</string>
     <string name="sound_name">Sound Name</string>
     <string name="sound_songs">Songs</string>
-    <string name="title_activity_songs">SongsActivity</string>
+    <string name="title_activity_songs">Songs</string>
     <string name="song_name">Song Name</string>
+    <string name="action_stop">Stop</string>
+    <string name="action_search">Search</string>
 
 </resources>

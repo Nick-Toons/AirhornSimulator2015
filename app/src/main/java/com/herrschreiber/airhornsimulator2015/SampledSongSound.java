@@ -33,7 +33,7 @@ public class SampledSongSound extends Sound {
 
         double duration = 0;
         for (NoteInfo note : song.getNotes()) {
-            double endTime = note.getStartTime() + note.getDuration() + .01; // To compensate for math error
+            double endTime = note.getStartTime() + note.getDuration() + .2; // To compensate for math error
             if (endTime > duration) {
                 duration = endTime;
             }
@@ -49,8 +49,6 @@ public class SampledSongSound extends Sound {
             double pitchFactor = sample.getAveragePitch() / note.getPitch();
             double durationFactor = sampleDuration / noteDuration * pitchFactor;
             double gain = note.getVelocity();
-
-            Log.d(TAG, "note: " + note + ", pitchFactor: " + pitchFactor + ", durationFactor: " + durationFactor);
 
             WaveformSimilarityBasedOverlapAdd wsola;
             RateTransposer rateTransposer = new RateTransposer(pitchFactor);

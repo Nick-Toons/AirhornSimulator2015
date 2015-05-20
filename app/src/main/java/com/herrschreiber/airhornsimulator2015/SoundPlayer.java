@@ -7,6 +7,8 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,13 +57,18 @@ public class SoundPlayer {
     }
 
     public List<AssetSound> listSounds() {
-        return new ArrayList<>(sounds.values());
+        List<AssetSound> soundList = new ArrayList<>(sounds.values());
+        Collections.sort(soundList, new Comparator<AssetSound>() {
+            @Override
+            public int compare(AssetSound lhs, AssetSound rhs) {
+                return lhs.getName().compareTo(rhs.getName());
+            }
+        });
+        return soundList;
     }
 
     public void playSound(final Sound sound) {
-        if (audioDispatcher != null)
-            audioDispatcher.stop();
-
+        this.stop();
         sound.start();
 
         audioDispatcher = new AudioDispatcher(sound, AUDIO_BUFFER_SIZE, AUDIO_BUFFER_SIZE / 2);
@@ -69,4 +76,8 @@ public class SoundPlayer {
         AsyncTask.THREAD_POOL_EXECUTOR.execute(audioDispatcher);
     }
 
+    public void stop() {
+        if (audioDispatcher != null)
+            audioDispatcher.stop();
+    }
 }
