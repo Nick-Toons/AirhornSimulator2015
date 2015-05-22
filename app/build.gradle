@@ -26,6 +26,7 @@ dependencies {
     compile 'com.android.support:support-v13:21.0.3'
     compile 'com.jakewharton:butterknife:6.1.0'
     compile 'com.google.guava:guava:18.0'
+    compile files('libs/TarsosDSP-Android-nightly.jar')
 }
 
 android.applicationVariants.all { variant ->

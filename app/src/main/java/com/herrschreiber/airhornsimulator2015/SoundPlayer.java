@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import be.tarsos.dsp.AudioDispatcher;
+import be.tarsos.dsp.io.android.AndroidAudioPlayer;
 
 /**
  * Created by alex on 2/13/15.
