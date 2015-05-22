@@ -111,7 +111,7 @@ public class MainActivity extends ActionBarActivity implements AdapterView.OnIte
         } else {
             final SoundListAdapter.ViewHolder viewHolder = (SoundListAdapter.ViewHolder) view.getTag();
             if (!viewHolder.isInitializing) {
-                final ViewSwitcher viewSwitcher = (ViewSwitcher) view;
+                final ViewSwitcher viewSwitcher = (ViewSwitcher) view.findViewById(R.id.sound_switcher);
                 new AsyncTask<Void, Void, Void>() {
                     @Override
                     protected void onPreExecute() {
